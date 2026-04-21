@@ -1,0 +1,42 @@
+# Entornos virtuales
+venv/
+.venv/
+env/
+.env
+
+# Datos (proteccion de datos reales/pesados)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Modelos en formato binario
+models/*.pkl
+models/*.h5
+models/*.onnx
+models/*.pt
+models/*.pth
+!models/.gitkeep
+
+# Logs 
+logs/*.log
+!logs/.gitkeep
+
+# Cache y archivos autogenerados
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/
+
+# IDE y Sistema Operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+
+models/
+doc/
+articulos/
+references/
+config/
