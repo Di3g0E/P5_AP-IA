@@ -1,2 +1,269 @@
-if __name__ == '__main__':
-    print('Punto de entrada principal')
+"""
+CLI principal del sistema de login biométrico facial.
+
+Comandos disponibles:
+  register    Registra un nuevo usuario con una o varias imágenes.
+  login       Autentica un usuario contra la base de datos.
+  list        Lista los usuarios registrados.
+  remove      Elimina el registro de un usuario.
+  benchmark   Ejecuta el benchmark comparativo ArcFace vs SFace.
+  evaluate    Calcula EER, ROC-AUC y genera gráficos sobre un dataset de pares.
+
+Ejemplo de uso:
+  python main.py register alice data/raw/alice/
+  python main.py login    alice data/raw/probe.jpg
+  python main.py benchmark data/raw/test_faces/
+  python main.py evaluate  data/processed/pairs.csv
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+from pathlib import Path
+
+import cv2
+import yaml
+from dotenv import load_dotenv
+from loguru import logger
+
+load_dotenv()
+
+# ── Configuración del logger ──────────────────────────────────────────────────
+logger.remove()
+logger.add(
+    sys.stderr,
+    format="<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | {message}",
+    level="INFO",
+)
+logger.add(
+    "logs/face_login_{time:YYYY-MM-DD}.log",
+    rotation="1 day",
+    retention="7 days",
+    level="DEBUG",
+)
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _load_config(config_path: str = "config/config.yaml") -> dict:
+    with open(config_path) as f:
+        return yaml.safe_load(f)
+
+
+def _get_passphrase() -> str:
+    """Obtiene la passphrase de cifrado desde variable de entorno o input."""
+    passphrase = os.environ.get("FACE_DB_PASSPHRASE", "")
+    if not passphrase:
+        import getpass
+        passphrase = getpass.getpass("Passphrase de la base de datos: ")
+    return passphrase
+
+
+def _load_images_from_path(path: str) -> list:
+    """Carga imagen(s) desde ruta — soporta archivo único o directorio."""
+    p = Path(path)
+    ext = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
+    if p.is_dir():
+        files = [f for f in sorted(p.iterdir()) if f.suffix.lower() in ext]
+        images = [cv2.imread(str(f)) for f in files]
+        images = [img for img in images if img is not None]
+        logger.info(f"Cargadas {len(images)} imágenes desde {path}")
+        return images
+    img = cv2.imread(str(p))
+    if img is None:
+        logger.error(f"No se pudo leer la imagen: {path}")
+        sys.exit(1)
+    return [img]
+
+
+# ── Subcomandos ───────────────────────────────────────────────────────────────
+
+def cmd_register(args: argparse.Namespace) -> None:
+    from src.models.face_login_system import FaceLoginSystem
+
+    cfg = _load_config(args.config)
+    system = FaceLoginSystem.from_config(
+        config_path=args.config,
+        passphrase=_get_passphrase(),
+        db_path=cfg["vector_store"]["embeddings_db"],
+    )
+    images = _load_images_from_path(args.image_path)
+
+    if len(images) == 1:
+        ok = system.register(args.user_id, images[0])
+    else:
+        ok = system.register_from_multiple(args.user_id, images)
+
+    if ok:
+        print(f"[OK] Usuario '{args.user_id}' registrado correctamente.")
+    else:
+        print(f"[ERROR] No se pudo registrar '{args.user_id}'.")
+        sys.exit(1)
+
+
+def cmd_login(args: argparse.Namespace) -> None:
+    from src.models.face_login_system import FaceLoginSystem, AuthStatus
+
+    cfg = _load_config(args.config)
+    system = FaceLoginSystem.from_config(
+        config_path=args.config,
+        passphrase=_get_passphrase(),
+        db_path=cfg["vector_store"]["embeddings_db"],
+    )
+    images = _load_images_from_path(args.image_path)
+    result = system.authenticate(args.user_id, images[0])
+
+    print(f"\n{'='*50}")
+    print(f"  Usuario      : {result.user_id}")
+    print(f"  Estado       : {result.status.name}")
+    print(f"  Mensaje      : {result.message}")
+    if result.liveness_score is not None:
+        print(f"  Liveness     : {result.liveness_score:.4f}")
+    if result.similarity_score is not None:
+        print(f"  Similitud    : {result.similarity_score:.4f}")
+    print(f"{'='*50}\n")
+
+    sys.exit(0 if result.granted else 1)
+
+
+def cmd_list(args: argparse.Namespace) -> None:
+    from src.models.face_login_system import FaceLoginSystem
+
+    cfg = _load_config(args.config)
+    system = FaceLoginSystem.from_config(
+        config_path=args.config,
+        passphrase=_get_passphrase(),
+        db_path=cfg["vector_store"]["embeddings_db"],
+    )
+    users = system.list_users()
+    if users:
+        print(f"Usuarios registrados ({len(users)}):")
+        for u in users:
+            print(f"  - {u}")
+    else:
+        print("No hay usuarios registrados.")
+
+
+def cmd_remove(args: argparse.Namespace) -> None:
+    from src.models.face_login_system import FaceLoginSystem
+
+    cfg = _load_config(args.config)
+    system = FaceLoginSystem.from_config(
+        config_path=args.config,
+        passphrase=_get_passphrase(),
+        db_path=cfg["vector_store"]["embeddings_db"],
+    )
+    ok = system.remove_user(args.user_id)
+    if ok:
+        print(f"[OK] Usuario '{args.user_id}' eliminado.")
+    else:
+        print(f"[WARN] Usuario '{args.user_id}' no encontrado.")
+
+
+def cmd_benchmark(args: argparse.Namespace) -> None:
+    """Benchmark de latencia y separabilidad ArcFace vs SFace."""
+    from src.models.face_login_system import FaceLoginSystem
+
+    system = FaceLoginSystem.from_config(
+        config_path=args.config,
+        passphrase="benchmark",
+        db_path="models/benchmark_tmp.pkl.enc",
+    )
+    images = _load_images_from_path(args.faces_dir)
+    if not images:
+        print("[ERROR] No se encontraron imágenes.")
+        sys.exit(1)
+
+    results = system.embedder.benchmark(images, n_runs=min(50, len(images)))
+
+    print("\n" + "="*60)
+    print("  BENCHMARK: ArcFace vs SFace")
+    print("="*60)
+    for backend, metrics in results.items():
+        print(f"\n  [{backend.upper()}]")
+        for k, v in metrics.items():
+            print(f"    {k:<25}: {v:.4f}")
+    print("="*60 + "\n")
+
+
+def cmd_evaluate(args: argparse.Namespace) -> None:
+    """Evaluación completa con EER, ROC-AUC y gráficos sobre pares."""
+    from src.data.face_dataset import VerificationPairDataset
+    from src.models.face_login_system import FaceLoginSystem
+    from src.evaluation.metrics import BiometricBenchmark
+
+    cfg = _load_config(args.config)
+    system = FaceLoginSystem.from_config(
+        config_path=args.config,
+        passphrase="eval",
+        db_path="models/eval_tmp.pkl.enc",
+    )
+    pair_dataset = VerificationPairDataset(args.pairs_csv)
+
+    bench = BiometricBenchmark(pair_dataset, system)
+    output_dir = cfg.get("evaluation", {}).get("output_dir", "doc/evaluation")
+    report = bench.run(
+        thresholds={
+            "arcface":  cfg["verification"]["threshold"],
+            "facenet":  cfg["verification"]["threshold_facenet"],
+        },
+        output_dir=output_dir,
+    )
+    bench.save_report(report, output_dir)
+
+
+# ── Punto de entrada ──────────────────────────────────────────────────────────
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Sistema de Login Biométrico Facial",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__,
+    )
+    parser.add_argument(
+        "--config", default="config/config.yaml",
+        help="Ruta al archivo de configuración YAML.",
+    )
+
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    # register
+    p_reg = sub.add_parser("register", help="Registrar un nuevo usuario.")
+    p_reg.add_argument("user_id", help="Identificador del usuario.")
+    p_reg.add_argument("image_path", help="Imagen o directorio de imágenes.")
+    p_reg.set_defaults(func=cmd_register)
+
+    # login
+    p_log = sub.add_parser("login", help="Autenticar un usuario.")
+    p_log.add_argument("user_id", help="Identificador del usuario.")
+    p_log.add_argument("image_path", help="Imagen de prueba.")
+    p_log.set_defaults(func=cmd_login)
+
+    # list
+    p_lst = sub.add_parser("list", help="Listar usuarios registrados.")
+    p_lst.set_defaults(func=cmd_list)
+
+    # remove
+    p_rm = sub.add_parser("remove", help="Eliminar un usuario.")
+    p_rm.add_argument("user_id", help="Identificador del usuario.")
+    p_rm.set_defaults(func=cmd_remove)
+
+    # benchmark
+    p_bm = sub.add_parser("benchmark", help="Benchmark ArcFace vs SFace.")
+    p_bm.add_argument("faces_dir", help="Directorio con imágenes de prueba.")
+    p_bm.set_defaults(func=cmd_benchmark)
+
+    # evaluate
+    p_ev = sub.add_parser("evaluate", help="Evaluación con dataset de pares.")
+    p_ev.add_argument("pairs_csv", help="CSV de pares (img1,img2,label).")
+    p_ev.set_defaults(func=cmd_evaluate)
+
+    return parser
+
+
+if __name__ == "__main__":
+    parser = build_parser()
+    args = parser.parse_args()
+    args.func(args)
