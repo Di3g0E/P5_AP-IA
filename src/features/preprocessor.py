@@ -4,10 +4,20 @@ Etapas 1 y 2 del pipeline:
   2. Preprocesamiento: resize → CLAHE → sharpening suave.
 
 Diseño:
-  - FaceDetector   : detecta y alinea el rostro (transf. afín sobre 5 landmarks).
-  - ImagePreprocessor: aplica las transformaciones fotométricas.
-  - FacePreprocessingPipeline: compone ambas fases y devuelve un np.ndarray
-    listo para Liveness Detector y Embedder.
+  - FaceDetector            : detecta y alinea el rostro (transf. afín sobre 5 landmarks).
+  - ImagePreprocessor       : aplica las transformaciones fotométricas (CLAHE + sharpening).
+  - FacePreprocessingPipeline: devuelve DOS imágenes del mismo recorte alineado:
+      · face_raw        → sin filtros fotométricos, para el LivenessDetector.
+      · face_processed  → con CLAHE + sharpening, para el FaceEmbedder.
+
+    Por qué separar liveness del preprocesamiento:
+      CLAHE y sharpening modifican el histograma y los bordes de alta frecuencia
+      que el DenseNet201 usa como señal de spoof (patrones Moiré de impresoras,
+      reflexiones especulares de pantallas, granularidad de papel fotográfico).
+      Aplicar estos filtros antes del liveness puede suprimir exactamente esas
+      señales, reduciendo la sensibilidad del detector a ataques de presentación.
+      El embedder, en cambio, se beneficia de la normalización fotométrica para
+      ser robusto a variaciones de iluminación inter-sesión.
 """
 
 from __future__ import annotations
@@ -193,8 +203,15 @@ class FacePreprocessingPipeline:
     """
     Combina FaceDetector + ImagePreprocessor en una sola llamada.
 
-    Devuelve la imagen preprocesada lista para pasar al LivenessDetector.
-    Si no se detecta rostro, lanza ValueError para abortar el pipeline.
+    Devuelve TRES valores para permitir que cada etapa posterior reciba
+    exactamente la imagen que necesita:
+      - face_raw       : recorte alineado sin filtros fotométricos.
+                         → usado por LivenessDetector (preserva señales de spoof).
+      - face_processed : recorte alineado con CLAHE + sharpening aplicados.
+                         → usado por FaceEmbedder (robusto a iluminación).
+      - detection_result: bbox, landmarks y confianza de MTCNN.
+
+    Si no se detecta rostro, lanza ValueError para abortar el pipeline en cascada.
     """
 
     def __init__(self, cfg: dict):
@@ -216,10 +233,17 @@ class FacePreprocessingPipeline:
             kernel_strength=sharp_cfg.get("kernel_strength", 0.3),
         )
 
-    def run(self, image_bgr: np.ndarray) -> tuple[np.ndarray, DetectionResult]:
+    def run(
+        self, image_bgr: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray, DetectionResult]:
         """
+        Ejecuta detección + alineación y genera las dos variantes de la imagen.
+
         Returns:
-            (face_preprocessed_bgr, detection_result)
+            (face_raw, face_processed, detection_result)
+              - face_raw       : BGR uint8, alineado, sin filtros fotométricos.
+              - face_processed : BGR uint8, alineado, con CLAHE + sharpening.
+              - detection_result: metadatos MTCNN (bbox, landmarks, confidence).
         Raises:
             ValueError si no se detecta un rostro válido.
         """
@@ -227,5 +251,7 @@ class FacePreprocessingPipeline:
         if result is None:
             raise ValueError("No se detectó ningún rostro en la imagen.")
 
-        processed = self.preprocessor.process(result.aligned_face)
-        return processed, result
+        face_raw = result.aligned_face                        # sin filtros
+        face_processed = self.preprocessor.process(face_raw)  # CLAHE + sharpen
+
+        return face_raw, face_processed, result

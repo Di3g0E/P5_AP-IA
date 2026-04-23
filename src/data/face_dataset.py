@@ -111,6 +111,16 @@ class VerificationPairDataset(Dataset):
         if not self.pairs_csv.exists():
             raise FileNotFoundError(f"CSV de pares no encontrado: {self.pairs_csv}")
 
+        # Las rutas relativas en el CSV se resuelven respecto al directorio
+        # del propio CSV (no al CWD), para que el pairs.csv sea portable.
+        csv_dir = self.pairs_csv.resolve().parent
+
+        def _resolve(p: str) -> Path:
+            path = Path(p)
+            if not path.is_absolute():
+                path = (csv_dir / path).resolve()
+            return path
+
         with open(self.pairs_csv) as f:
             for lineno, line in enumerate(f, 1):
                 line = line.strip()
@@ -120,7 +130,7 @@ class VerificationPairDataset(Dataset):
                 if len(parts) != 3:
                     logger.warning(f"Línea {lineno} malformada, se omite: {line}")
                     continue
-                p1, p2, label = Path(parts[0]), Path(parts[1]), int(parts[2])
+                p1, p2, label = _resolve(parts[0]), _resolve(parts[1]), int(parts[2])
                 self.pairs.append((p1, p2, label))
 
         genuine = sum(1 for *_, l in self.pairs if l == 1)

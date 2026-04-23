@@ -285,10 +285,10 @@ class BiometricBenchmark:
 
         for img1, img2, label in self.pair_dataset:
             try:
-                face1, _ = self.system.preproc_pipeline.run(img1)
-                face2, _ = self.system.preproc_pipeline.run(img2)
-                emb1 = self.system.embedder.embed(face1).embedding
-                emb2 = self.system.embedder.embed(face2).embedding
+                _, face1_proc, _ = self.system.preproc_pipeline.run(img1)
+                _, face2_proc, _ = self.system.preproc_pipeline.run(img2)
+                emb1 = self.system.embedder.embed(face1_proc).embedding
+                emb2 = self.system.embedder.embed(face2_proc).embedding
                 sim  = self.system.embedder.cosine_similarity(emb1, emb2)
                 scores_list.append(sim)
                 labels_list.append(int(label))

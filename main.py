@@ -214,6 +214,75 @@ def cmd_evaluate(args: argparse.Namespace) -> None:
     bench.save_report(report, output_dir)
 
 
+def cmd_tune(args: argparse.Namespace) -> None:
+    """Optimiza los thresholds de verificación y liveness sobre los datos propios."""
+    from src.data.face_dataset import VerificationPairDataset
+    from src.models.face_login_system import FaceLoginSystem
+    from src.evaluation.tune_thresholds import (
+        tune_verification_threshold,
+        tune_liveness_threshold,
+        update_config,
+    )
+
+    cfg = _load_config(args.config)
+    system = FaceLoginSystem.from_config(
+        config_path=args.config,
+        passphrase="tune",
+        db_path="models/tune_tmp.pkl.enc",
+    )
+    output_dir = cfg.get("evaluation", {}).get("output_dir", "doc/evaluation")
+
+    # ── Verificación ─────────────────────────────────────────────────────
+    pair_dataset = VerificationPairDataset(args.pairs_csv)
+    ver_result = tune_verification_threshold(
+        system, pair_dataset,
+        search_steps=cfg["evaluation"].get("eer_threshold_search_steps", 1000),
+        output_dir=output_dir,
+    )
+
+    print("\n" + "="*60)
+    print("  TUNING — Verificación")
+    print("="*60)
+    print(f"  Pares           : {ver_result.n_genuine} gen / {ver_result.n_impostor} imp")
+    print(f"  ROC-AUC         : {ver_result.roc_auc:.4f}")
+    print(f"  EER             : {ver_result.eer:.4f} @ thr={ver_result.eer_threshold:.4f}")
+    print(f"  Best F1         : {ver_result.best_f1:.4f} @ thr={ver_result.best_f1_threshold:.4f}")
+    print(f"  Best Accuracy   : {ver_result.best_acc:.4f} @ thr={ver_result.best_acc_threshold:.4f}")
+
+    # ── Liveness (si se pide) ────────────────────────────────────────────
+    liveness_thr = None
+    if args.real_images:
+        live_result = tune_liveness_threshold(
+            system, args.real_images,
+            target_frr=args.target_frr,
+            output_dir=output_dir,
+        )
+        liveness_thr = live_result["recommended_threshold"]
+        print("\n  TUNING — Liveness")
+        print("-"*60)
+        for k, v in live_result.items():
+            print(f"    {k:<22}: {v:.4f}")
+
+    print("="*60 + "\n")
+
+    # ── Escribir en config ───────────────────────────────────────────────
+    if args.apply:
+        chosen = {
+            "eer":  ver_result.eer_threshold,
+            "f1":   ver_result.best_f1_threshold,
+            "acc":  ver_result.best_acc_threshold,
+        }[args.criterion]
+        update_config(
+            args.config,
+            verification_threshold=chosen,
+            liveness_threshold=liveness_thr,
+            criterion=args.criterion,
+        )
+        print(f"[OK] config.yaml actualizado (criterio: {args.criterion}).")
+    else:
+        print("[INFO] --apply no indicado; config.yaml no ha sido modificado.")
+
+
 # ── Punto de entrada ──────────────────────────────────────────────────────────
 
 def build_parser() -> argparse.ArgumentParser:
@@ -259,6 +328,30 @@ def build_parser() -> argparse.ArgumentParser:
     p_ev = sub.add_parser("evaluate", help="Evaluación con dataset de pares.")
     p_ev.add_argument("pairs_csv", help="CSV de pares (img1,img2,label).")
     p_ev.set_defaults(func=cmd_evaluate)
+
+    # tune
+    p_tn = sub.add_parser(
+        "tune",
+        help="Optimiza thresholds de verificación (y liveness) sobre datos propios.",
+    )
+    p_tn.add_argument("pairs_csv", help="CSV de pares etiquetados.")
+    p_tn.add_argument(
+        "--real-images", default=None,
+        help="Directorio con rostros reales para calibrar el threshold de liveness.",
+    )
+    p_tn.add_argument(
+        "--target-frr", type=float, default=0.05,
+        help="FRR operacional tolerado (percentil para threshold liveness).",
+    )
+    p_tn.add_argument(
+        "--criterion", choices=["eer", "f1", "acc"], default="eer",
+        help="Criterio de selección del threshold óptimo.",
+    )
+    p_tn.add_argument(
+        "--apply", action="store_true",
+        help="Si se indica, escribe los thresholds óptimos en config.yaml.",
+    )
+    p_tn.set_defaults(func=cmd_tune)
 
     return parser
 
