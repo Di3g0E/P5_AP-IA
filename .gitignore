@@ -34,8 +34,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-
-models/
 doc/
 articulos/
 references/

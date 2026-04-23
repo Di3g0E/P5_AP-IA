@@ -14,22 +14,19 @@ Los tests de integración real (con modelos cargados) se marcan con
 """
 
 from __future__ import annotations
-
-import hashlib
-import os
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 
 
-# ── Fixtures ──────────────────────────────────────────────────────────────────
+# Fixtures
 
 @pytest.fixture
 def dummy_face_bgr() -> np.ndarray:
-    """Imagen sintética 224×224 BGR (ruido uniforme)."""
+    """Imagen sintética 224x224 BGR (ruido uniforme)."""
     rng = np.random.default_rng(42)
     return rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
 
@@ -62,7 +59,7 @@ def base_config() -> dict:
     }
 
 
-# ── Tests: ImagePreprocessor ──────────────────────────────────────────────────
+# Tests: ImagePreprocessor
 
 class TestImagePreprocessor:
     def test_output_shape_preserved(self, dummy_face_bgr):
@@ -86,7 +83,7 @@ class TestImagePreprocessor:
         assert result.std() >= dark.std()
 
 
-# ── Tests: EncryptedEmbeddingStore ────────────────────────────────────────────
+# Tests: EncryptedEmbeddingStore
 
 class TestEncryptedEmbeddingStore:
     def test_store_retrieve_roundtrip(self, unit_embedding):
@@ -153,7 +150,7 @@ class TestEncryptedEmbeddingStore:
             assert "eve" in store
 
 
-# ── Tests: AccessController ───────────────────────────────────────────────────
+# Tests: AccessController
 
 class TestAccessController:
     def test_not_locked_initially(self):
@@ -184,7 +181,7 @@ class TestAccessController:
         assert ctrl.remaining_attempts("user4") == 3
 
 
-# ── Tests: métricas de evaluación ────────────────────────────────────────────
+# Tests: métricas de evaluación
 
 class TestBiometricMetrics:
     def _make_scores(self, n_genuine=200, n_impostor=200, seed=0):
@@ -233,7 +230,7 @@ class TestBiometricMetrics:
         assert expected_keys.issubset(set(metrics.keys()))
 
 
-# ── Tests: cosine_similarity ──────────────────────────────────────────────────
+# Tests: cosine_similarity
 
 class TestCosineSimilarity:
     def test_identical_vectors_give_one(self, unit_embedding):
@@ -257,7 +254,7 @@ class TestCosineSimilarity:
         assert abs(sim + 1.0) < 1e-5
 
 
-# ── Tests: FaceLoginSystem (con mocks) ───────────────────────────────────────
+# Tests: FaceLoginSystem (con mocks)
 
 class TestFaceLoginSystemMocked:
     """

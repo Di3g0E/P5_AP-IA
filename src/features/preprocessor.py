@@ -33,7 +33,7 @@ from loguru import logger
 import torch
 
 
-# ── Estructuras de datos ──────────────────────────────────────────────────────
+# Estructuras de datos 
 
 @dataclass
 class DetectionResult:
@@ -44,7 +44,7 @@ class DetectionResult:
     aligned_face: np.ndarray  # imagen BGR recortada y alineada, shape (H, W, 3)
 
 
-# ── Etapa 1: Detección y Alineación ──────────────────────────────────────────
+# Etapa 1: Detección y Alineación 
 
 # Coordenadas de referencia para los 5 landmarks en la imagen de salida 224x224.
 # Derivadas del estándar ArcFace (112x112) escaladas x2.
@@ -147,7 +147,7 @@ class FaceDetector:
         return aligned
 
 
-# ── Etapa 2: Preprocesamiento Fotométrico ─────────────────────────────────────
+# Etapa 2: Preprocesamiento Fotométrico 
 
 class ImagePreprocessor:
     """
@@ -180,14 +180,14 @@ class ImagePreprocessor:
 
     def process(self, face_bgr: np.ndarray) -> np.ndarray:
         """Aplica CLAHE + sharpening. Input y output: BGR uint8."""
-        # ── CLAHE en canal L ─────────────────────────────────────────────────
+        # CLAHE en canal L 
         lab = cv2.cvtColor(face_bgr, cv2.COLOR_BGR2LAB)
         l, a, b = cv2.split(lab)
         l_eq = self.clahe.apply(l)
         lab_eq = cv2.merge([l_eq, a, b])
         enhanced = cv2.cvtColor(lab_eq, cv2.COLOR_LAB2BGR)
 
-        # ── Sharpening (unsharp mask) ────────────────────────────────────────
+        # Sharpening (unsharp mask) 
         blurred = cv2.GaussianBlur(enhanced, (0, 0), sigmaX=3)
         sharpened = cv2.addWeighted(
             enhanced, 1.0 + self.kernel_strength,
@@ -197,7 +197,7 @@ class ImagePreprocessor:
         return sharpened
 
 
-# ── Pipeline completo (Etapas 1+2) ───────────────────────────────────────────
+# Pipeline completo (Etapas 1+2) 
 
 class FacePreprocessingPipeline:
     """

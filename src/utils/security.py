@@ -31,7 +31,7 @@ from cryptography.hazmat.primitives import hashes
 from loguru import logger
 
 
-# ── Derivación de clave ───────────────────────────────────────────────────────
+# Derivación de clave
 
 def derive_key(passphrase: str, salt: Optional[bytes] = None) -> tuple[bytes, bytes]:
     """
@@ -52,7 +52,7 @@ def derive_key(passphrase: str, salt: Optional[bytes] = None) -> tuple[bytes, by
     return key, salt
 
 
-# ── Almacén seguro de embeddings ──────────────────────────────────────────────
+# Almacén seguro de embeddings
 
 @dataclass
 class EncryptedEmbeddingStore:
@@ -152,7 +152,7 @@ class EncryptedEmbeddingStore:
         return user_id in self._records
 
 
-# ── Control de acceso por intentos fallidos ───────────────────────────────────
+# Control de acceso por intentos fallidos
 
 class AccessController:
     """
