@@ -311,7 +311,7 @@ def cmd_finance_add(args: argparse.Namespace) -> None:
     type_val = input("Tipo (Expenses/Income): ").strip()
 
     print("\n[INFO] Evaluando transacción con el modelo...")
-    detector = FinancialAnomalyDetector(csv_path)
+    detector = FinancialAnomalyDetector(csv_path, max_history=args.max_history)
     is_anomalous, reasons = detector.predict(date_str, amount_num, area, type_val)
 
     if is_anomalous:
@@ -412,6 +412,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_fin.add_argument(
         "--csv-path", default="data/raw/db_mod_descript.csv",
         help="Ruta al histórico CSV.",
+    )
+    p_fin.add_argument(
+        "--max-history", type=int, default=5000,
+        help="Límite de registros históricos para entrenar el modelo (por defecto: 5000).",
     )
     p_fin.set_defaults(func=cmd_finance_add)
 

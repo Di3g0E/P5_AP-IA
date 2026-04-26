@@ -5,9 +5,10 @@ from sklearn.preprocessing import LabelEncoder
 from src.data.financial_data import load_financial_data
 
 class FinancialAnomalyDetector:
-    def __init__(self, csv_path: str, contamination: float = 0.02):
+    def __init__(self, csv_path: str, contamination: float = 0.02, max_history: int = 5000):
         self.csv_path = csv_path
         self.contamination = contamination
+        self.max_history = max_history
         self.iso_forest = IsolationForest(contamination=contamination, random_state=42)
         
         self.le_area = LabelEncoder()
@@ -25,6 +26,10 @@ class FinancialAnomalyDetector:
         df = load_financial_data(self.csv_path)
         if df.empty:
             return
+
+        # ---- 0. Límite de Historial ----
+        if len(df) > self.max_history:
+            df = df.tail(self.max_history).copy()
 
         # ---- 1. Preparación para Regla de 3 Sigmas ----
         self.stats_global = {
