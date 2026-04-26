@@ -16,9 +16,9 @@ Este es el repositorio correspondiente al Proyecto 5 de Aplicaciones de Intelige
 ├── playground/             # Área extra para pruebas rápidas y notebooks
 ├── references/             # Papers, artículos y manuales de referencia
 ├── src/                    # Código fuente modular y productivo
-│   ├── data/               # Scripts de carga, limpieza y validación
+│   ├── data/               # Scripts de carga, limpieza y validación (Facial y Financiero)
 │   ├── features/           # Ingeniería de variables (CLAHE, MTCNN)
-│   ├── models/             # Extracción de Embeddings y Liveness
+│   ├── models/             # Embeddings, Liveness y Detección de Anomalías
 │   ├── evaluation/         # Métricas, validación cruzada y reportes
 │   └── utils/              # Funciones de seguridad y soporte
 ├── tests/                  # Pruebas unitarias de integración
@@ -77,6 +77,17 @@ El archivo principal `main.py` actúa como orquestador del sistema. Se proporcio
   python main.py tune data/processed/pairs.csv --apply
   ```
 
+### 3. Control Financiero (Anomalías)
+- **Añadir transacción**: Introduce un nuevo gasto/ingreso con validación en tiempo real.
+  ```bash
+  python main.py finance-add
+  ```
+  *Nota: El sistema utiliza un modelo híbrido (Isolation Forest + 3-Sigma) para detectar errores de entrada o gastos fuera de lo común antes de guardarlos en el histórico. Añade una explicación de la inconsitencia detectada para mayor explicabilidad para el usuario*
+
+  Ejemplos:
+  - Un registro normal: Amount=25, Area=Food, Type=Expenses -> Debe guardarse automáticamente.
+  - Un registro anómalo por cantidad y tipo: Amount=5000, Area=Leisure, Type=Expenses -> Debe pedir confirmación.
+
 ## Implementaciones de Seguridad (Ciberseguridad)
 
 Al ser un sistema biométrico, el enfoque de seguridad *Security by Design* es central en el proyecto. Se han integrado las siguientes capas de protección:
@@ -87,3 +98,12 @@ Al ser un sistema biométrico, el enfoque de seguridad *Security by Design* es c
 4. **Prevención de Ataques de Presentación (PAD)**: Se incorpora un modelo `DenseNet201` como *Liveness Detector* para rechazar fotografías impresas o reproducciones en pantallas. Este modelo actúa como una "puerta dura" (hard gate) al principio de la pipeline.
 5. **Aislamiento Fotométrico**: El pipeline de preprocesamiento separa la imagen en crudo (enviada al detector de Liveness para que analice artefactos de falsificación como píxeles de pantalla) y la imagen ecualizada mediante CLAHE (enviada al embedder para maximizar la tasa de acierto).
 6. **Bloqueo contra Fuerza Bruta (Access Control)**: Se cuenta el número de intentos de acceso fallidos por usuario, implementando un sistema de bloqueo temporal (*Account Lockout*) para mitigar los intentos de ataques reiterados.
+
+## Detección de Anomalías Financieras (Módulo ML)
+
+Se ha integrado un sistema de protección contra errores de entrada de datos y detección de gastos/ingresos inusuales utilizando un enfoque híbrido de Machine Learning:
+
+1. **Regla Estadística de las 3-Sigmas (Z-Score)**: Proporciona una base robusta e interpretable para detectar anomalías univariantes (ej. un importe extremadamente alto para una categoría específica).
+2. **Isolation Forest (iForest)**: Un algoritmo de aprendizaje no supervisado que detecta anomalías multivariantes, identificando patrones inusuales en la combinación de `Cantidad`, `Área`, `Tipo` y variables temporales (`Mes`, `Día de la semana`).
+
+El sistema es **autoevolutivo**: el modelo se reentrena automáticamente con cada nueva entrada confirmada, adaptándose a la variabilidad natural del gasto del usuario sin generar falsos positivos excesivos.

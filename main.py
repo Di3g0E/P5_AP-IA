@@ -282,6 +282,57 @@ def cmd_tune(args: argparse.Namespace) -> None:
     else:
         print("[INFO] --apply no indicado; config.yaml no ha sido modificado.")
 
+def cmd_finance_add(args: argparse.Namespace) -> None:
+    """Añade un registro financiero con validación interactiva de anomalías."""
+    from src.models.anomaly_detector import FinancialAnomalyDetector
+    from src.data.financial_data import append_transaction, parse_amount, format_amount
+    import datetime
+
+    csv_path = args.csv_path
+    if not os.path.exists(csv_path):
+        print(f"[ERROR] No se encuentra el archivo CSV: {csv_path}")
+        sys.exit(1)
+
+    print("\n" + "="*50)
+    print("  NUEVO REGISTRO FINANCIERO")
+    print("="*50)
+    
+    desc = input("Descripción: ").strip()
+    
+    hoy_str = datetime.datetime.now().strftime("%d/%m/%Y")
+    date_str = input(f"Fecha (DD/MM/YYYY) [{hoy_str}]: ").strip()
+    if not date_str:
+        date_str = hoy_str
+
+    amount_str = input("Cantidad (ej. 10,00€ o 10.5): ").strip()
+    amount_num = parse_amount(amount_str)
+    
+    area = input("Área (ej. Food, Leisure, Salary...): ").strip()
+    type_val = input("Tipo (Expenses/Income): ").strip()
+
+    print("\n[INFO] Evaluando transacción con el modelo...")
+    detector = FinancialAnomalyDetector(csv_path)
+    is_anomalous, reasons = detector.predict(date_str, amount_num, area, type_val)
+
+    if is_anomalous:
+        print("\n[WARNING] ¡Posible anomalía detectada!")
+        for r in reasons:
+            print(f"  - {r}")
+            
+        confirm = input("\n¿Estás seguro de que quieres guardar este registro? [y/N]: ").strip().lower()
+        if confirm != 'y':
+            print("Operación cancelada. El registro NO se ha guardado.\n")
+            sys.exit(0)
+    else:
+        print("[OK] Transacción dentro de los parámetros normales.")
+
+    # Asegurar el formato final de la cantidad
+    final_amount_str = format_amount(amount_num)
+
+    append_transaction(csv_path, desc, date_str, final_amount_str, area, type_val)
+    print("[OK] Registro guardado correctamente en el histórico.\n")
+
+
 
 # ── Punto de entrada ──────────────────────────────────────────────────────────
 
@@ -352,6 +403,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Si se indica, escribe los thresholds óptimos en config.yaml.",
     )
     p_tn.set_defaults(func=cmd_tune)
+
+    # finance-add
+    p_fin = sub.add_parser(
+        "finance-add",
+        help="Añade un nuevo registro financiero verificando si es anómalo.",
+    )
+    p_fin.add_argument(
+        "--csv-path", default="data/raw/db_mod_descript.csv",
+        help="Ruta al histórico CSV.",
+    )
+    p_fin.set_defaults(func=cmd_finance_add)
 
     return parser
 
