@@ -8,3 +8,48 @@ Time: 9:25
 Phone Number: +34684127891
 Message: Falló login para usuario: diegoHora: 09:25:41
 --------------------
+Date: 27/4/2026
+Time: 0:9
+Phone Number: +34684127891
+Message: Login exitoso para usuario: diegoHora: 00:09:41
+--------------------
+Date: 27/4/2026
+Time: 0:15
+Phone Number: +34684127891
+Message: Login exitoso para usuario: diegoHora: 00:15:34
+--------------------
+Date: 27/4/2026
+Time: 0:26
+Phone Number: +34684127891
+Message: ✅ Login EXITOSO👤 Usuario: diego⏰ Hora: 00:26:08
+--------------------
+Date: 27/4/2026
+Time: 0:27
+Phone Number: +34684127891
+Message: ❌ Login FALLIDO👤 Usuario: diego⏰ Hora: 00:27:22
+--------------------
+Date: 27/4/2026
+Time: 0:29
+Phone Number: +34684127891
+Message: ✅ Login SUCCESS👤 Usuario: diego📝 Mensaje: Acceso concedido.🛡️ Liveness: 0.5601🔍 Similitud: 0.7595⏰ Hora: 00:29:38
+--------------------
+Date: 27/4/2026
+Time: 0:31
+Phone Number: +34684127891
+Message: ✅ Login SUCCESS👤 Usuario: diego📝 Mensaje: Acceso concedido.⏰ Hora: 00:31:03
+--------------------
+Date: 27/4/2026
+Time: 0:31
+Phone Number: +34684127891
+Message: ❌ Login SCORE_TOO_LOW👤 Usuario: diego📝 Mensaje: Verificación fallida (sim=-0.0009 < 0.0729). Intentos restantes: 4.⏰ Hora: 00:31:39
+--------------------
+Date: 27/4/2026
+Time: 0:34
+Phone Number: +34684127891
+Message: ❌ Login SCORE_TOO_LOW👤 Usuario: diego📝 Mensaje: Verificación fallida. Intentos restantes: 4.⏰ Hora: 00:34:19
+--------------------
+Date: 27/4/2026
+Time: 0:36
+Phone Number: +34684127891
+Message: ❌ Login SCORE_TOO_LOW👤 Usuario: diego📝 Mensaje: Verificación fallida. Intentos restantes: 4.⏰ Hora: 00:36:26
+--------------------

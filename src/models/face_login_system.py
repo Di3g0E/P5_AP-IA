@@ -141,7 +141,7 @@ class FaceLoginSystem:
         if not is_live:
             raise ValueError(
                 f"Enrolamiento rechazado para '{user_id}': "
-                f"liveness score={live_score:.4f} < threshold."
+                "liveness fallido (rostro no real)."
             )
 
         # Etapa 4: Embedding sobre imagen CON CLAHE + sharpening
@@ -241,10 +241,7 @@ class FaceLoginSystem:
                 status=AuthStatus.LIVENESS_FAILED,
                 user_id=user_id,
                 liveness_score=live_score,
-                message=(
-                    f"Ataque de presentación detectado "
-                    f"(score={live_score:.4f} < {self.liveness_detector.threshold})."
-                ),
+                message="Ataque de presentación detectado.",
             )
 
         # Etapa 4: Extracción de embedding sobre imagen CON CLAHE + sharpen 
@@ -278,11 +275,7 @@ class FaceLoginSystem:
                 user_id=user_id,
                 liveness_score=live_score,
                 similarity_score=sim_score,
-                message=(
-                    f"Verificación fallida (sim={sim_score:.4f} < "
-                    f"{self.sim_threshold}). "
-                    f"Intentos restantes: {remaining}."
-                ),
+                message=f"Verificación fallida. Intentos restantes: {remaining}.",
             )
 
         # Éxito 

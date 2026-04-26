@@ -1,10 +1,11 @@
 """
-Módulo de notificaciones usando pywhatkit para el sistema biométrico.
+Módulo de notificaciones dual (WhatsApp y Telegram) para el sistema biométrico.
 """
 
 import os
 import time
-from typing import Optional
+import requests
+from typing import Optional, Any
 from loguru import logger
 
 try:
@@ -15,89 +16,104 @@ except ImportError:
     logger.warning("pywhatkit no está instalado")
 
 
-class NotificationService:
+class WhatsAppService:
     """Gestor de notificaciones usando pywhatkit (WhatsApp Web)."""
     
     def __init__(self, phone_number: str):
         if not PYWHATKIT_AVAILABLE:
-            raise ImportError("pywhatkit es requerido para las notificaciones")
-        
+            raise ImportError("pywhatkit es requerido para las notificaciones de WhatsApp")
         self.phone_number = phone_number
         
     def send_message(self, message: str, wait_time: int = 15) -> bool:
-        """
-        Envía mensaje WhatsApp usando pywhatkit.
-        
-        Args:
-            message: Mensaje a enviar
-            wait_time: Tiempo de espera para cargar WhatsApp Web
-            
-        Returns:
-            True si éxito, False si error
-        """
+        """Envía mensaje WhatsApp abriendo el navegador."""
         try:
-            # pywhatkit.sendwhatmsg(phone_no, message, time_hour, time_min, wait_time)
-            # Usamos la hora actual + 2 minutos para asegurar tiempo suficiente
-            import datetime
-            now = datetime.datetime.now()
-            target_time = now + datetime.timedelta(minutes=2)
-            
-            pywhatkit.sendwhatmsg(
+            pywhatkit.sendwhatmsg_instantly(
                 phone_no=self.phone_number,
                 message=message,
-                time_hour=target_time.hour,
-                time_min=target_time.minute,
-                wait_time=wait_time
+                wait_time=wait_time,
+                tab_close=True,
+                close_time=3
             )
-            
-            logger.info(f"Notificación enviada a {self.phone_number}")
+            logger.info(f"Notificación WhatsApp enviada a {self.phone_number}")
             return True
-            
         except Exception as e:
-            logger.error(f"Error enviando notificación: {e}")
+            logger.error(f"Error enviando WhatsApp: {e}")
             return False
-    
-    def send_login_notification(self, user_id: str, success: bool = True) -> bool:
-        """Envía notificación de login."""
-        if success:
-            message = f"Login exitoso para usuario: {user_id}\nHora: {time.strftime('%H:%M:%S')}"
-        else:
-            message = f"Falló login para usuario: {user_id}\nHora: {time.strftime('%H:%M:%S')}"
-        
-        return self.send_message(message)
-    
-    def send_registration_notification(self, user_id: str) -> bool:
-        """Envía notificación de registro."""
-        message = f"👤 Nuevo usuario registrado: {user_id}\nHora: {time.strftime('%H:%M:%S')}"
-        return self.send_message(message)
-    
-    @classmethod
-    def from_env(cls) -> Optional["NotificationService"]:
-        """Crea instancia desde variables de entorno."""
-        phone = os.getenv("PYWHATKIT_PHONE")
-        
-        if not phone:
-            logger.warning("Variable PYWHATKIT_PHONE no configurada")
-            return None
-            
-        return cls(phone)
 
 
-def notify_login_success(user_id: str, success: bool = True) -> None:
-    """Notifica login si está configurado pywhatkit."""
-    if not PYWHATKIT_AVAILABLE:
-        return
+class TelegramService:
+    """Gestor de notificaciones usando Telegram Bot API (Invisible/Bot)."""
+    
+    def __init__(self, token: str, chat_id: str):
+        self.token = token
+        self.chat_id = chat_id
+        self.base_url = f"https://api.telegram.org/bot{token}/sendMessage"
         
-    notifier = NotificationService.from_env()
-    if notifier:
-        notifier.send_login_notification(user_id, success)
+    def send_message(self, message: str) -> bool:
+        """Envía mensaje a Telegram de forma invisible (HTTP request)."""
+        try:
+            payload = {
+                "chat_id": self.chat_id,
+                "text": message,
+                "parse_mode": "Markdown"
+            }
+            response = requests.post(self.base_url, json=payload, timeout=10)
+            response.raise_for_status()
+            logger.info(f"Notificación Telegram enviada al chat {self.chat_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error enviando Telegram: {e}")
+            return False
 
+
+def get_notification_message(user_id: str, action: str, success: bool = True, **kwargs) -> str:
+    """Genera el texto del mensaje con formato enriquecido."""
+    timestamp = time.strftime('%H:%M:%S')
+    
+    if action == "login":
+        status = kwargs.get("status", "SUCCESS" if success else "FAILED")
+        msg_text = kwargs.get("message", "Acceso concedido" if success else "Acceso denegado")
+        liveness = kwargs.get("liveness")
+        similarity = kwargs.get("similarity")
+        
+        emoji = "✅" if success else "❌"
+        lines = [
+            f"{emoji} *Login {status}*",
+            f"👤 *Usuario*: {user_id}",
+            f"📝 *Mensaje*: {msg_text}",
+            f"⏰ *Hora*: {timestamp}"
+        ]
+        return "\n".join(lines)
+        
+    elif action == "register":
+        return f"👤 *Nuevo usuario registrado*\n🆔 ID: {user_id}\n⏰ Hora: {timestamp}"
+        
+    return f"Notificación de sistema: {action} para {user_id}"
+
+
+def notify_all(user_id: str, action: str, success: bool = True, **kwargs) -> None:
+    """Envía notificaciones por todos los medios configurados."""
+    message = get_notification_message(user_id, action, success, **kwargs)
+    
+    # 1. Intentar Telegram (Bot invisible) - Soporta Markdown
+    t_token = os.getenv("TELEGRAM_TOKEN")
+    t_chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    if t_token and t_chat_id:
+        tg = TelegramService(t_token, t_chat_id)
+        tg.send_message(message)
+    
+    # 2. Intentar WhatsApp (Navegador) - Texto plano sin asteriscos
+    w_phone = os.getenv("PYWHATKIT_PHONE")
+    if w_phone and PYWHATKIT_AVAILABLE:
+        ws = WhatsAppService(w_phone)
+        plain_message = message.replace("*", "")
+        ws.send_message(plain_message)
+
+
+# Funciones de compatibilidad con el código anterior
+def notify_login_success(user_id: str, success: bool = True, **kwargs) -> None:
+    notify_all(user_id, "login", success, **kwargs)
 
 def notify_user_registered(user_id: str) -> None:
-    """Notifica nuevo registro si está configurado pywhatkit."""
-    if not PYWHATKIT_AVAILABLE:
-        return
-        
-    notifier = NotificationService.from_env()
-    if notifier:
-        notifier.send_registration_notification(user_id)
+    notify_all(user_id, "register")
+

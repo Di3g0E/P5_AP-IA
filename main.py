@@ -18,8 +18,12 @@ Ejemplo de uso:
 
 from __future__ import annotations
 
-import argparse
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Silencia avisos de TensorFlow
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0' # Silencia el aviso de oneDNN
+
+
+import argparse
 import sys
 from pathlib import Path
 
@@ -130,7 +134,14 @@ def cmd_login(args: argparse.Namespace) -> None:
     print(f"{'='*50}\n")
 
     # Notificación con pywhatkit si está configurado
-    notify_login_success(args.user_id, result.granted)
+    notify_login_success(
+        args.user_id, 
+        result.granted,
+        status=result.status.name,
+        message=result.message,
+        liveness=result.liveness_score,
+        similarity=result.similarity_score
+    )
 
     sys.exit(0 if result.granted else 1)
 
