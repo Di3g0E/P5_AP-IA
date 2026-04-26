@@ -82,7 +82,7 @@ def _load_images_from_path(path: str) -> list:
 
 def cmd_register(args: argparse.Namespace) -> None:
     from src.models.face_login_system import FaceLoginSystem
-    from src.utils.whatsapp_notifier import notify_user_registered
+    from src.utils.notification_service import notify_user_registered
 
     cfg = _load_config(args.config)
     system = FaceLoginSystem.from_config(
@@ -99,10 +99,8 @@ def cmd_register(args: argparse.Namespace) -> None:
 
     if ok:
         print(f"[OK] Usuario '{args.user_id}' registrado correctamente.")
-        # Notificación WhatsApp si está configurado
-        user_phone = getattr(args, 'phone', None) or os.environ.get(f"WHATSAPP_PHONE_{args.user_id.upper()}")
-        if user_phone:
-            notify_user_registered(args.user_id, user_phone)
+        # Notificación con pywhatkit si está configurado
+        notify_user_registered(args.user_id)
     else:
         print(f"[ERROR] No se pudo registrar '{args.user_id}'.")
         sys.exit(1)
@@ -110,7 +108,7 @@ def cmd_register(args: argparse.Namespace) -> None:
 
 def cmd_login(args: argparse.Namespace) -> None:
     from src.models.face_login_system import FaceLoginSystem, AuthStatus
-    from src.utils.whatsapp_notifier import notify_login_success
+    from src.utils.notification_service import notify_login_success
 
     cfg = _load_config(args.config)
     system = FaceLoginSystem.from_config(
@@ -131,11 +129,8 @@ def cmd_login(args: argparse.Namespace) -> None:
         print(f"  Similitud    : {result.similarity_score:.4f}")
     print(f"{'='*50}\n")
 
-    # Notificación WhatsApp solo si login exitoso
-    if result.granted:
-        user_phone = getattr(args, 'phone', None) or os.environ.get(f"WHATSAPP_PHONE_{args.user_id.upper()}")
-        if user_phone:
-            notify_login_success(args.user_id, user_phone)
+    # Notificación con pywhatkit si está configurado
+    notify_login_success(args.user_id, result.granted)
 
     sys.exit(0 if result.granted else 1)
 
