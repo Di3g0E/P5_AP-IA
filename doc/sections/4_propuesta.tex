@@ -41,25 +41,25 @@ El subcomando \texttt{evaluate} calcula EER, ROC-AUC, F1 y TAR@FAR sobre un fich
 \subsection{Resultados Experimentales}
 \label{subsec:resultados}
 
-La evaluación del detector de \textit{liveness} se ha realizado sobre la partición de test del dataset Kaggle \textit{real-vs-fake-anti-spoofing-video-classification}, extrayendo tres \textit{frames} por vídeo en los segundos 3, 5 y 7 (conjunto disjunto del usado en entrenamiento). La Figura~\ref{fig:samples_live_spoof} muestra un mosaico representativo de muestras correctamente clasificadas en ambas clases, donde se aprecia visualmente la diferencia textural y fotométrica que el modelo aprende a discriminar.
+La evaluación del detector de \textit{liveness} se ha realizado sobre la partición de test del dataset Kaggle \textit{real-vs-fake-anti-spoofing-video-classification}, extrayendo tres \textit{frames} por vídeo en los segundos 3, 5 y 7 (conjunto disjunto del usado en entrenamiento). La Figura~\ref{fig:samples_live_spoof} muestra un mosaico representativo de muestras correctamente clasificadas en ambas clases, donde se aprecia visualmente la diferencia que el modelo aprende a discriminar.
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
-    \includegraphics[width=\textwidth]{evaluation/samples_live_vs_spoof.png}
+    \includegraphics[width=0.85\textwidth]{evaluation/samples_live_vs_spoof.png}
     \caption{Ejemplos del conjunto de test del detector de \textit{liveness}: fila superior muestras reales (\textit{live}) y fila inferior ataques de presentación (\textit{spoof}). Se indica el \textit{score} de probabilidad de ser real predicho por el modelo.}
     \label{fig:samples_live_spoof}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
-    \begin{subfigure}[t]{0.45\textwidth}
+    \begin{subfigure}[tbp]{0.45\textwidth}
         \centering
         \includegraphics[width=\linewidth]{evaluation/sample_live.png}
         \caption{Muestra real (\textit{live}).}
         \label{fig:sample_live}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[t]{0.45\textwidth}
+    \begin{subfigure}[tbp]{0.45\textwidth}
         \centering
         \includegraphics[width=\linewidth]{evaluation/sample_spoof.png}
         \caption{Muestra falsa (\textit{spoof}).}
@@ -69,23 +69,23 @@ La evaluación del detector de \textit{liveness} se ha realizado sobre la partic
     \label{fig:sample_compare}
 \end{figure}
 
-Cuantitativamente, la Figura~\ref{fig:roc_liveness} presenta la curva ROC del detector y la Figura~\ref{fig:score_dist_liveness} la distribución de \textit{scores} para ambas clases, lo que permite observar la separabilidad alcanzada y justificar la elección del umbral de operación. La matriz de confusión resultante (Figura~\ref{fig:confusion_liveness}) resume los aciertos y errores de clasificación, ofreciendo una lectura directa de los falsos aceptos y falsos rechazos del sistema.
+La Figura~\ref{fig:roc_liveness} presenta la curva ROC del detector y la Figura~\ref{fig:score_dist_liveness} la distribución de \textit{scores} para ambas clases, lo que permite observar la separabilidad alcanzada y justificar la elección del umbral de operación. La matriz de confusión resultante (Figura~\ref{fig:confusion_liveness}) resume los aciertos y errores de clasificación, ofreciendo una lectura directa de los falsos aceptos y falsos rechazos del sistema.
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
     \includegraphics[width=0.7\textwidth]{evaluation/roc_liveness.png}
     \caption{Curva ROC del detector de \textit{liveness} sobre el conjunto de test. Se marca en rojo el punto de operación correspondiente al umbral configurado.}
     \label{fig:roc_liveness}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
     \includegraphics[width=0.7\textwidth]{evaluation/score_dist_liveness.png}
     \caption{Distribución de \textit{scores} de \textit{liveness} para muestras reales (verde) y de ataque (rojo), con el umbral actual y el umbral correspondiente al \textit{Equal Error Rate}.}
     \label{fig:score_dist_liveness}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
     \includegraphics[width=0.55\textwidth]{evaluation/confusion_liveness.png}
     \caption{Matriz de confusión del detector de \textit{liveness} sobre la partición de test del dataset.}

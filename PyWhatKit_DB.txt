@@ -83,3 +83,8 @@ Time: 15:53
 Phone Number: +34684127891
 Message: ⚠️ Posible anomalía financiera detectada📅 Fecha: 27/04/2026📝 Descripción: Comida amigos💶 Cantidad: 5.000,00€📂 Área: Leisure🔖 Tipo: Expenses🔍 Detalle: • Regla 3-Sigma: Cantidad global atípica (media: 43.51€) • Regla 3-Sigma: Cantidad atípica para categoría 'Leisure' (media: 12.35€) • Regla 3-Sigma: Cantidad atípica para tipo 'Expenses' (media: 21.53€) • Isolation Forest: Patrón multivariante/temporal inusual detectado.⏰ Hora: 15:53:12
 --------------------
+Date: 27/4/2026
+Time: 18:27
+Phone Number: +34684127891
+Message: ✅ Login SUCCESS👤 Usuario: diego📝 Mensaje: Acceso concedido.⏰ Hora: 18:27:04
+--------------------
