@@ -35,7 +35,32 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-doc/
+# Documentos
+doc/*.aux
+doc/*.out
+doc/*.log
+doc/*.lot
+doc/*.lof
+doc/*.bbl
+doc/*.blg
+doc/*.synctex.gz
+doc/*.toc
+doc/*.run.xml
+doc/*.synctex(busy)
+doc/*.synctex.gz(busy)
+doc/*.spl
+doc/*.nav
+doc/*.snm
+doc/*.ilg
+doc/*.gz
+doc/*.out
+doc/*.fdb_latexmk
+doc/*.synctex.gz(busy)
+doc/*.synctex(busy)
+doc/*.fls
+doc/*.bcf
+
 articulos/
 references/
 config/
+

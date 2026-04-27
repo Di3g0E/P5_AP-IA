@@ -34,7 +34,7 @@ from loguru import logger
 
 load_dotenv()
 
-# ── Configuración del logger ──────────────────────────────────────────────────
+# Configuración del logger 
 logger.remove()
 logger.add(
     sys.stderr,
@@ -49,7 +49,7 @@ logger.add(
 )
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# Helpers 
 
 def _load_config(config_path: str = "config/config.yaml") -> dict:
     with open(config_path) as f:
@@ -82,7 +82,7 @@ def _load_images_from_path(path: str) -> list:
     return [img]
 
 
-# ── Subcomandos ───────────────────────────────────────────────────────────────
+# Subcomandos 
 
 def cmd_register(args: argparse.Namespace) -> None:
     from src.models.face_login_system import FaceLoginSystem
@@ -250,7 +250,7 @@ def cmd_tune(args: argparse.Namespace) -> None:
     )
     output_dir = cfg.get("evaluation", {}).get("output_dir", "doc/evaluation")
 
-    # ── Verificación ─────────────────────────────────────────────────────
+    # Verificación 
     pair_dataset = VerificationPairDataset(args.pairs_csv)
     ver_result = tune_verification_threshold(
         system, pair_dataset,
@@ -267,7 +267,7 @@ def cmd_tune(args: argparse.Namespace) -> None:
     print(f"  Best F1         : {ver_result.best_f1:.4f} @ thr={ver_result.best_f1_threshold:.4f}")
     print(f"  Best Accuracy   : {ver_result.best_acc:.4f} @ thr={ver_result.best_acc_threshold:.4f}")
 
-    # ── Liveness (si se pide) ────────────────────────────────────────────
+    # Liveness (si se pide) 
     liveness_thr = None
     if args.real_images:
         live_result = tune_liveness_threshold(
@@ -279,11 +279,12 @@ def cmd_tune(args: argparse.Namespace) -> None:
         print("\n  TUNING — Liveness")
         print("-"*60)
         for k, v in live_result.items():
+            
             print(f"    {k:<22}: {v:.4f}")
 
     print("="*60 + "\n")
 
-    # ── Escribir en config ───────────────────────────────────────────────
+    # Escribir en config 
     if args.apply:
         chosen = {
             "eer":  ver_result.eer_threshold,
@@ -304,6 +305,7 @@ def cmd_finance_add(args: argparse.Namespace) -> None:
     """Añade un registro financiero con validación interactiva de anomalías."""
     from src.models.anomaly_detector import FinancialAnomalyDetector
     from src.data.financial_data import append_transaction, parse_amount, format_amount
+    from src.utils.notification_service import notify_finance_anomaly
     import datetime
 
     csv_path = args.csv_path
@@ -336,7 +338,16 @@ def cmd_finance_add(args: argparse.Namespace) -> None:
         print("\n[WARNING] ¡Posible anomalía detectada!")
         for r in reasons:
             print(f"  - {r}")
-            
+
+        notify_finance_anomaly(
+            reasons,
+            date=date_str,
+            amount=format_amount(amount_num),
+            area=area,
+            type_val=type_val,
+            description=desc,
+        )
+
         confirm = input("\n¿Estás seguro de que quieres guardar este registro? [y/N]: ").strip().lower()
         if confirm != 'y':
             print("Operación cancelada. El registro NO se ha guardado.\n")
@@ -352,7 +363,7 @@ def cmd_finance_add(args: argparse.Namespace) -> None:
 
 
 
-# ── Punto de entrada ──────────────────────────────────────────────────────────
+# Punto de entrada 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(

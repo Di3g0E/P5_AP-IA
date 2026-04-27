@@ -1,0 +1,24 @@
+\section{Introducción}
+\label{sec:introduccion}
+
+El propósito de esta práctica es el diseño e implementación de un sistema de autenticación biométrica facial robusto, orientado a entornos de producción y construido bajo el paradigma de \textit{Security by Design}. La biometría facial se ha consolidado como uno de los factores de autenticación más cómodos para el usuario final, pero su despliegue en entornos reales requiere mitigar dos vectores críticos: los ataques de presentación (\textit{spoofing}) y la fuga de plantillas biométricas almacenadas \cite{ramachandra2017pad}.
+
+La arquitectura propuesta integra tres pilares: reconocimiento facial, detección de vitalidad y seguridad criptográfica. El pipeline de visión utiliza MTCNN \cite{zhang2016mtcnn} para el alineamiento,  CLAHE para la normalización y ArcFace \cite{deng2019arcface} o FaceNet \cite{schroff2015facenet} para la extracción de rasgos. Por su parte, el módulo de \textit{liveness} (DenseNet201 \cite{huang2017densenet}) actúa como barrera de seguridad previa. Además, el almacenamiento cumple con estándares de alta seguridad mediante cifrado autenticado y derivación de claves PBKDF2 según las recomendaciones del NIST \cite{nist800132}.
+
+También se incorpora un segundo módulo de aprendizaje no supervisado para el control financiero personal del usuario, basado en una combinación híbrida de la regla de las 3-Sigmas e \textit{Isolation Forest} \cite{liu2008isolation}, que aporta explicabilidad y capacidad de detección de transacciones anómalas tanto univariantes como multivariantes.
+
+\subsection{Objetivos del Proyecto}
+\label{subsec:objetivos}
+
+Los objetivos principales se estructuran en tres niveles:
+
+\textbf{Objetivo técnico:} Implementar un verificador facial \textit{end-to-end} con detección, alineamiento, normalización fotométrica, \textit{embedding} y comparación coseno, complementado con un detector de \textit{liveness} CNN y un sistema de almacenamiento cifrado con verificación de integridad mediante HMAC-SHA256.
+
+\textbf{Objetivo de seguridad:} Aplicar principios de \textit{Security by Design} para garantizar la confidencialidad de las plantillas (cifrado simétrico autenticado), la integridad frente a manipulaciones del fichero de base de datos, la mitigación de ataques de fuerza bruta (\textit{Account Lockout}) y la prevención de ataques de presentación según ISO/IEC 30107-3 \cite{iso30107}.
+
+\textbf{Objetivo Técnico:} Evaluar el rendimiento de los modelos de \textit{embedding} y desarrollar un módulo CLI que automatice la búsqueda de umbrales óptimos para la verificación y detección de vitalidad a partir de datos etiquetados.
+
+\subsection{Alcance y Limitaciones}
+\label{subsec:alcance}
+
+El sistema se centra en la verificación facial 1:1 (\textit{login}) y la inscripción 1:N de un número reducido de usuarios mediante una interfaz por línea de comandos. Las limitaciones principales son: dependencia de la calidad de las muestras de inscripción, ausencia de despliegue en hardware dedicado (cámaras 3D o infrarrojas) que mitigaría ciertos ataques de presentación, y un detector de \textit{liveness} entrenado sobre un conjunto público acotado, lo que condiciona su generalización a nuevos vectores de ataque.

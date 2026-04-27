@@ -1,0 +1,29 @@
+\section{Estado del Arte}
+\label{sec:estado_arte}
+
+El reconocimiento facial moderno se basa en redes neuronales profundas que proyectan las imágenes a un espacio vectorial donde la distancia (típicamente coseno) entre representaciones de la misma identidad es pequeña. Esta sección revisa las familias de modelos y técnicas relevantes para el sistema propuesto.
+
+\subsection{Detección y Alineamiento Facial}
+\label{subsec:deteccion}
+
+MTCNN \cite{zhang2016mtcnn} es un detector en cascada que combina tres redes (P-Net, R-Net, O-Net) para localizar el rostro y predecir cinco puntos de referencia faciales (ojos, nariz, comisuras de la boca). Estos puntos se utilizan posteriormente para realizar un alineamiento afín que estandariza la pose y mejora notablemente el rendimiento de los \textit{embedders} \cite{zeng2021occlusion}.
+
+\subsection{Generación de \textit{Embeddings} Faciales}
+\label{subsec:embeddings}
+
+\textbf{FaceNet} \cite{schroff2015facenet} introduce el aprendizaje directo de un \textit{embedding} 128-D mediante \textit{triplet loss}, optimizando la separación angular entre identidades. \textbf{ArcFace} \cite{deng2019arcface} mejora esta idea sustituyendo el \textit{loss} clásico por un margen angular aditivo sobre el \textit{softmax}, lo que produce una separación más uniforme y robusta y resulta hoy el estándar \textit{de facto} en verificación facial.
+
+\subsection{Detección de Ataques de Presentación}
+\label{subsec:liveness}
+
+Los métodos de \textit{liveness} pasivo —que no requieren cooperación adicional del usuario— se basan en explotar artefactos espacio-temporales presentes en imágenes falsificadas: patrones de \textit{moiré} en pantallas, distorsiones de color en impresiones, ausencia de variabilidad textural \cite{ramachandra2017pad}. Arquitecturas convolucionales densas como DenseNet \cite{huang2017densenet} resultan adecuadas porque maximizan la reutilización de \textit{features} en distintas escalas, lo cual favorece la detección de estos artefactos.
+
+\subsection{Protección de Plantillas Biométricas}
+\label{subsec:proteccion}
+
+Las plantillas biométricas se consideran datos personales especialmente sensibles. Las prácticas recomendadas combinan: (i) cifrado simétrico autenticado para la confidencialidad, (ii) MAC o firma para la integridad, y (iii) derivación de claves a partir de secretos memorizables siguiendo NIST SP 800-132 \cite{nist800132} con un número alto de iteraciones para encarecer ataques \textit{offline}. La especificación Fernet \cite{fernet} encapsula AES-128-CBC + HMAC-SHA256 + \textit{timestamp} en un único \textit{token}, simplificando un esquema correcto.
+
+\subsection{Detección de Anomalías}
+\label{subsec:anomalias}
+
+Para el módulo financiero, \textit{Isolation Forest} \cite{liu2008isolation} es un algoritmo no supervisado que aísla observaciones anómalas mediante particiones aleatorias del espacio de \textit{features}; las anomalías requieren menos divisiones para quedar aisladas y, por tanto, obtienen una puntuación característica. Combinado con la regla estadística de las 3-Sigmas, ofrece un compromiso entre interpretabilidad univariante y detección multivariante.

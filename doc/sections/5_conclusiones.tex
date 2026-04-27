@@ -1,0 +1,8 @@
+\section{Conclusiones}
+\label{sec:conclusiones}
+
+El sistema desarrollado demuestra que es posible construir un verificador facial robusto integrando componentes de \textit{deep learning} consolidados (MTCNN, ArcFace/FaceNet, DenseNet201) con buenas prácticas criptográficas estándar (Fernet, PBKDF2, HMAC-SHA256). La arquitectura modular y la separación entre detección, \textit{liveness} y \textit{embedding} permite sustituir cualquier componente sin alterar el resto de la pipeline, lo que facilita su evolución.
+
+El esquema de seguridad propuesto cubre las tres propiedades clave de una plantilla biométrica almacenada: confidencialidad, integridad y autenticación, eliminando la posibilidad de fugas en texto plano y detectando manipulaciones del fichero. La incorporación del \textit{Account Lockout} mitiga ataques de fuerza bruta sobre el verificador, y el \textit{liveness gate} reduce la superficie de ataques de presentación más comunes.
+
+Las herramientas de calibración (\texttt{evaluate}, \texttt{benchmark}, \texttt{tune}) resultan claves para llevar el sistema a un punto de operación adecuado al contexto de despliegue, permitiendo elegir explícitamente el compromiso entre FAR y FRR. Como líneas futuras se identifican: (i) entrenar el detector de \textit{liveness} con conjuntos más diversos para mejorar su generalización a nuevos vectores de ataque, (ii) explorar verificación basada en vídeo en lugar de imagen estática, y (iii) integrar mecanismos de \textit{cancellable biometrics} que permitan revocar plantillas comprometidas sin necesidad de reinscripción.

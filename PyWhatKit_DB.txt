@@ -53,3 +53,33 @@ Time: 0:36
 Phone Number: +34684127891
 Message: ❌ Login SCORE_TOO_LOW👤 Usuario: diego📝 Mensaje: Verificación fallida. Intentos restantes: 4.⏰ Hora: 00:36:26
 --------------------
+Date: 27/4/2026
+Time: 15:21
+Phone Number: +34684127891
+Message: ✅ Login SUCCESS👤 Usuario: diego📝 Mensaje: Acceso concedido.⏰ Hora: 15:21:25
+--------------------
+Date: 27/4/2026
+Time: 15:23
+Phone Number: +34684127891
+Message: ❌ Login SCORE_TOO_LOW👤 Usuario: diego📝 Mensaje: Verificación fallida. Intentos restantes: 4.⏰ Hora: 15:23:16
+--------------------
+Date: 27/4/2026
+Time: 15:24
+Phone Number: +34684127891
+Message: ✅ Login SUCCESS👤 Usuario: diego📝 Mensaje: Acceso concedido.⏰ Hora: 15:24:18
+--------------------
+Date: 27/4/2026
+Time: 15:30
+Phone Number: +34684127891
+Message: ❌ Login LIVENESS_FAILED👤 Usuario: diego📝 Mensaje: Ataque de presentación detectado.⏰ Hora: 15:30:07
+--------------------
+Date: 27/4/2026
+Time: 15:31
+Phone Number: +34684127891
+Message: ✅ Login SUCCESS👤 Usuario: diego📝 Mensaje: Acceso concedido.⏰ Hora: 15:31:36
+--------------------
+Date: 27/4/2026
+Time: 15:53
+Phone Number: +34684127891
+Message: ⚠️ Posible anomalía financiera detectada📅 Fecha: 27/04/2026📝 Descripción: Comida amigos💶 Cantidad: 5.000,00€📂 Área: Leisure🔖 Tipo: Expenses🔍 Detalle: • Regla 3-Sigma: Cantidad global atípica (media: 43.51€) • Regla 3-Sigma: Cantidad atípica para categoría 'Leisure' (media: 12.35€) • Regla 3-Sigma: Cantidad atípica para tipo 'Expenses' (media: 21.53€) • Isolation Forest: Patrón multivariante/temporal inusual detectado.⏰ Hora: 15:53:12
+--------------------

@@ -90,7 +90,7 @@ class FaceLoginSystem:
         # Inicializar componentes del pipeline
         self.preproc_pipeline = FacePreprocessingPipeline(cfg)
         self.liveness_detector = LivenessDetector(
-            model_path=live_cfg.get("model_path", "models/liveness_densenet201.pth"),
+            model_path=live_cfg.get("model_path", "models/liveness_kaggle.pth"),
             threshold=float(live_cfg.get("threshold", 0.95)),
             device=cfg.get("pipeline", {}).get("device", "cpu"),
         )

@@ -87,7 +87,31 @@ def get_notification_message(user_id: str, action: str, success: bool = True, **
         
     elif action == "register":
         return f"👤 *Nuevo usuario registrado*\n🆔 ID: {user_id}\n⏰ Hora: {timestamp}"
-        
+
+    elif action == "finance_anomaly":
+        reasons = kwargs.get("reasons") or []
+        amount = kwargs.get("amount")
+        area = kwargs.get("area")
+        type_val = kwargs.get("type")
+        date_str = kwargs.get("date")
+        desc = kwargs.get("description")
+
+        lines = [
+            "⚠️ *Posible anomalía financiera detectada*",
+            f"📅 *Fecha*: {date_str}",
+        ]
+        if desc:
+            lines.append(f"📝 *Descripción*: {desc}")
+        lines.append(f"💶 *Cantidad*: {amount}")
+        lines.append(f"📂 *Área*: {area}")
+        lines.append(f"🔖 *Tipo*: {type_val}")
+        if reasons:
+            lines.append("🔍 *Detalle*:")
+            for r in reasons:
+                lines.append(f"  • {r}")
+        lines.append(f"⏰ *Hora*: {timestamp}")
+        return "\n".join(lines)
+
     return f"Notificación de sistema: {action} para {user_id}"
 
 
@@ -116,4 +140,17 @@ def notify_login_success(user_id: str, success: bool = True, **kwargs) -> None:
 
 def notify_user_registered(user_id: str) -> None:
     notify_all(user_id, "register")
+
+def notify_finance_anomaly(reasons, *, date, amount, area, type_val, description=None) -> None:
+    notify_all(
+        user_id="finance",
+        action="finance_anomaly",
+        success=False,
+        reasons=reasons,
+        date=date,
+        amount=amount,
+        area=area,
+        type=type_val,
+        description=description,
+    )
 

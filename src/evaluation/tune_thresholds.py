@@ -39,7 +39,7 @@ from src.evaluation.metrics import (
 )
 
 
-# ── Resultado de la búsqueda ─────────────────────────────────────────────────
+# Resultado de la búsqueda 
 
 @dataclass
 class ThresholdSearchResult:
@@ -55,7 +55,7 @@ class ThresholdSearchResult:
     roc_auc:            float
 
 
-# ── 1. Verificación ──────────────────────────────────────────────────────────
+# 1. Verificación 
 
 def _score_all_pairs(pair_dataset, system) -> Tuple[np.ndarray, np.ndarray]:
     """Extrae (labels, scores) coseno sobre todos los pares del dataset."""
@@ -109,10 +109,10 @@ def tune_verification_threshold(
             f"(hay {n_genuine}/{n_impostor})."
         )
 
-    # EER (punto FAR==FRR) ─────────────────────────────────────────────────
+    # EER (punto FAR==FRR) 
     eer, eer_thr = compute_eer(y_true, scores)
 
-    # Búsqueda de grilla para F1 y accuracy ────────────────────────────────
+    # Búsqueda de grilla para F1 y accuracy 
     candidates = np.linspace(scores.min(), scores.max(), search_steps)
     f1s = np.array([f1_score(y_true, scores >= t, zero_division=0) for t in candidates])
     accs = np.array([(((scores >= t) == y_true).mean()) for t in candidates])
@@ -120,7 +120,7 @@ def tune_verification_threshold(
     best_f1_idx = int(np.argmax(f1s))
     best_acc_idx = int(np.argmax(accs))
 
-    # ROC-AUC ──────────────────────────────────────────────────────────────
+    # ROC-AUC 
     from sklearn.metrics import roc_auc_score
     roc_auc = float(roc_auc_score(y_true, scores))
 
@@ -136,7 +136,7 @@ def tune_verification_threshold(
         roc_auc=roc_auc,
     )
 
-    # ── Gráficos ────────────────────────────────────────────────────────
+    # Gráficos 
     plot_score_distribution(
         y_true, scores,
         threshold=result.eer_threshold,
@@ -153,7 +153,7 @@ def tune_verification_threshold(
         output_path=output_dir / "threshold_sweep.png",
     )
 
-    # ── Informe ─────────────────────────────────────────────────────────
+    # Informe 
     with open(output_dir / "tuning_report.yaml", "w") as f:
         yaml.safe_dump(asdict(result), f, sort_keys=False)
 
@@ -187,7 +187,7 @@ def _plot_threshold_sweep(
     plt.close(fig)
 
 
-# ── 2. Liveness ──────────────────────────────────────────────────────────────
+# 2. Liveness 
 
 def tune_liveness_threshold(
     system,
@@ -278,7 +278,7 @@ def tune_liveness_threshold(
     return summary
 
 
-# ── 3. Escribir óptimos en config.yaml ───────────────────────────────────────
+# 3. Escribir óptimos en config.yaml 
 
 def update_config(
     config_path: str | Path,

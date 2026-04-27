@@ -1,0 +1,25 @@
+\section{Contexto}
+\label{sec:contexto}
+
+La autenticación biométrica facial se ha desplegado de forma masiva en dispositivos móviles, sistemas de control de acceso físico, banca digital y plataformas de identificación remota. Frente a los factores de autenticación tradicionales (contraseñas, tokens), la biometría facial aporta una experiencia de uso fluida pero introduce riesgos específicos: a diferencia de una contraseña, una plantilla biométrica no es revocable, por lo que su compromiso es permanente.
+
+\subsection{Marco del Problema}
+\label{subsec:marco}
+
+Un sistema de verificación facial productivo debe abordar simultáneamente tres dimensiones:
+
+\begin{itemize}
+    \item \textbf{Precisión:} la separación entre las distribuciones de pares genuinos y de impostores debe ser suficiente para garantizar tasas de error razonables (FAR/FRR) en el punto de operación elegido.
+    \item \textbf{Robustez frente a ataques de presentación:} fotografías impresas, reproducciones en pantalla y máscaras 3D constituyen los vectores de ataque más habituales en entornos no controlados \cite{ramachandra2017pad}.
+    \item \textbf{Protección de las plantillas:} los \textit{embeddings} almacenados deben tratarse como datos personales sensibles, cumpliendo principios de confidencialidad e integridad.
+\end{itemize}
+
+\subsection{Marco Académico y Normativo}
+\label{subsec:marco_academico}
+
+El sistema se inspira en el estándar ISO/IEC 30107-3 \cite{iso30107} para evaluación de detección de ataques de presentación, y las recomendaciones del NIST SP 800-132 \cite{nist800132} para derivación de claves a partir de contraseñas.
+
+\subsection{Datos Disponibles}
+\label{subsec:datos}
+
+Para el entrenamiento y la evaluación del módulo de \textit{liveness} se ha utilizado un conjunto público de imágenes anotadas como \textit{real} y \textit{spoof}. Para la evaluación del verificador se construye un conjunto de pares (\texttt{pairs.csv}) etiquetados como genuinos o impostores. El módulo de control financiero reutiliza el histórico de transacciones de la Práctica 2.
