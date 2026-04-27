@@ -15,8 +15,9 @@ models/*.pkl
 models/*.h5
 models/*.onnx
 models/*.pt
-models/*.pth
+#models/*.pth
 !models/.gitkeep
+!models/liveness_kaggle.pth
 
 # Logs 
 logs/*.log
